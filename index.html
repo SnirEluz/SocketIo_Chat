@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body>* {
+            border: 1px solid black;
+            padding: 2vh;
+        }
+
+        .messages {
+            height: 85vh;
+            overflow-y: auto;
+        }
+
+        .form {
+            height: 15vh;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <section class="messages"></section>
+    <section class="form">
+        <span></span>
+        <input type="text" class="msg" placeholder="Write something">
+        <input type="text" class="name" placeholder="Nickname">
+        <button>Share</button>
+    </section>
+    <script>
+        //Init
+        const socket = io();
+        //Travelings the dom
+        const messages = document.querySelector('.messages')
+        const msgInp = document.querySelector('.msg')
+        const nameInp = document.querySelector('.name')
+        const button = document.querySelector('button')
+        const span = document.querySelector('span')
+        let timeout
+        //Event
+        button.addEventListener('click', e => {
+            if (msgInp.value) {
+                socket.emit("I sent msg", {
+                    msg: msgInp.value,
+                    name: nameInp.value || 'annonimus'
+                });
+                const p = document.createElement('p')
+                p.textContent = "Me: " + nameInp.value
+                messages.appendChild(p)
+                msgInp.value = ""
+            }
+        })
+
+        msgInp.addEventListener('keydown', e => {
+            socket.emit("i'm typying", nameInp.value || 'annonimus')
+        })
+
+        socket.on('new msg arrived', e => {
+            const p = document.createElement('p')
+            p.textContent = e.name + ": " + e.msg
+            messages.appendChild(p)
+        })
+        socket.on('someone is typing', e => {
+            span.textContent = e + " is typing"
+            clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                span.textContent = ""
+            }, 2000);
+        })
+    </script>
+</body>
+
+</html>
